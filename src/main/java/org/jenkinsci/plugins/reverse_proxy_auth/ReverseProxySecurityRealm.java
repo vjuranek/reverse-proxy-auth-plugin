@@ -27,6 +27,19 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.security.SecurityRealm;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+
 import org.acegisecurity.Authentication;
 import org.acegisecurity.AuthenticationManager;
 import org.acegisecurity.GrantedAuthority;
@@ -38,24 +51,18 @@ import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.springframework.dao.DataAccessException;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-
 /**
  * @author Kohsuke Kawaguchi
  */
 public class ReverseProxySecurityRealm extends SecurityRealm {
     private final String header;
+    //private final String loginUrl;
+    private final boolean loginViaHttps; 
 
     @DataBoundConstructor
-    public ReverseProxySecurityRealm(String header) {
+    public ReverseProxySecurityRealm(String header, boolean loginViaHttps) {
         this.header = header;
+        this.loginViaHttps = loginViaHttps;
     }
 
     /**
@@ -64,7 +71,31 @@ public class ReverseProxySecurityRealm extends SecurityRealm {
     public String getHeader() {
         return header;
     }
+    
+    public boolean getLoginViaHttps(){
+    	return loginViaHttps;
+    }
+    
+    /*
+    public String getLoginUrl(){
+    	return loginUrl;
+    }
 
+    public boolean showLoginLink(){
+    	return ((loginUrl != null) && (loginUrl.trim() != ""));
+    }
+    */
+    
+    public String getSecureRootUrl(){
+    	String rootUrl = Hudson.getInstance().getRootUrl();
+    	if(rootUrl == null)
+    		return null;
+    	if(rootUrl.startsWith("https")){
+    		return rootUrl; 
+    	}
+    	return rootUrl.replaceFirst("http", "https");
+    }
+    
     @Override
     public boolean canLogOut() {
         return false;

@@ -1,2 +1,17 @@
-<!-- no login link -->
-<j:jelly xmlns:j="jelly:core" />
+<!-- no login link > <j:jelly xmlns:j="jelly:core" / -->
+
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
+	<!-- j:if test="${it.showLoginLink()}"> <st:include page="/hudson/security/SecurityRealm/loginLink.jelly"/> </j:if -->
+	<j:if test="${it.loginViaHttps}">
+		<j:set var="from" value="${if (request.session.attribute('from')!=null) request.session.getAttribute('from');  else if (request.getParameter('from')!=null) request.getParameter('from'); else if (request.requestURI=='/loginError' || request.requestURI=='/login') '/'; else request.requestURI;}" />
+		<j:set var="from" value="${from.substring(1)}" /> <!-- remove initial / to avail double // in final URL -->
+		<!-- j:invokeStatic var="from" className="java.net.URLEncoder" method="encode">
+			<j:arg value="${from}" />
+			<j:arg value="UTF-8" />
+		</j:invokeStatic -->
+		<a style="color:inherit" href="${it.secureRootUrl}${from}">
+			<b>${%login}</b> 
+		</a>
+	</j:if>
+</j:jelly>
