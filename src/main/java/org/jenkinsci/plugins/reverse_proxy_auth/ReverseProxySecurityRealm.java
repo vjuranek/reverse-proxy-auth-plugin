@@ -55,14 +55,22 @@ import org.springframework.dao.DataAccessException;
  * @author Kohsuke Kawaguchi
  */
 public class ReverseProxySecurityRealm extends SecurityRealm {
+    
+    private static final String REMOTE_USER_HEADER = "REMOTE_USER";
+    
     private final String header;
     //private final String loginUrl;
     private final boolean loginViaHttps; 
+    private final boolean remoteUserHeader;
 
     @DataBoundConstructor
     public ReverseProxySecurityRealm(String header, boolean loginViaHttps) {
         this.header = header;
         this.loginViaHttps = loginViaHttps;
+        if(REMOTE_USER_HEADER.equalsIgnoreCase(header))
+            remoteUserHeader = true;
+        else
+            remoteUserHeader = false;
     }
 
     /**
@@ -109,8 +117,13 @@ public class ReverseProxySecurityRealm extends SecurityRealm {
 
             public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
                 HttpServletRequest r = (HttpServletRequest) request;
-
-                String v = r.getHeader(header);
+                
+                String v;
+                if(remoteUserHeader)
+                    v = r.getRemoteUser();
+                else
+                    v = r.getHeader(header);
+                
                 Authentication a;
                 if (v==null) {
                     a = Hudson.ANONYMOUS;
