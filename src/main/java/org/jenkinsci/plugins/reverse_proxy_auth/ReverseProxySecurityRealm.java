@@ -29,8 +29,6 @@ import hudson.model.Hudson;
 import hudson.security.SecurityRealm;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -39,6 +37,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+
+import jenkins.model.Jenkins;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.AuthenticationManager;
@@ -59,13 +59,15 @@ public class ReverseProxySecurityRealm extends SecurityRealm {
     private static final String REMOTE_USER_HEADER = "REMOTE_USER";
     
     private final String header;
+    private final String rootUrl; // dig root URL from request can be tricky, make sure that we can change it in case of need
     //private final String loginUrl;
     private final boolean loginViaHttps; 
     private final boolean remoteUserHeader;
 
     @DataBoundConstructor
-    public ReverseProxySecurityRealm(String header, boolean loginViaHttps) {
+    public ReverseProxySecurityRealm(String header, String rootUrl, boolean loginViaHttps) {
         this.header = header;
+        this.rootUrl = rootUrl;
         this.loginViaHttps = loginViaHttps;
         if(REMOTE_USER_HEADER.equalsIgnoreCase(header))
             remoteUserHeader = true;
@@ -78,6 +80,10 @@ public class ReverseProxySecurityRealm extends SecurityRealm {
      */
     public String getHeader() {
         return header;
+    }
+    
+    public String getRootUrl(){
+        return rootUrl;
     }
     
     public boolean getLoginViaHttps(){
@@ -95,13 +101,13 @@ public class ReverseProxySecurityRealm extends SecurityRealm {
     */
     
     public String getSecureRootUrl(){
-    	String rootUrl = Hudson.getInstance().getRootUrl();
-    	if(rootUrl == null)
+        String jenkinsRootUrl = (rootUrl != null) ? rootUrl : Jenkins.getInstance().getRootUrl();
+    	if(jenkinsRootUrl == null)
     		return null;
-    	if(rootUrl.startsWith("https")){
-    		return rootUrl; 
+    	if(jenkinsRootUrl.startsWith("https")){
+    		return jenkinsRootUrl; 
     	}
-    	return rootUrl.replaceFirst("http", "https");
+    	return jenkinsRootUrl.replaceFirst("http", "https");
     }
     
     @Override

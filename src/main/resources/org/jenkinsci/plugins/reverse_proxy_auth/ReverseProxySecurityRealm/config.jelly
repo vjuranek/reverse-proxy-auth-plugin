@@ -21,6 +21,9 @@
 		<f:entry title="${%Login via HTTPS}">
 			<f:checkbox field="loginViaHttps" default="false" />
 		</f:entry>
+		<f:entry title="${%Root URL}">
+			<f:textbox field="rootUrl" default="" />
+		</f:entry>
 		<!-- f:entry title="${%Login URL}">
 			<f:textbox field="loginUrl" default="" />
 		</f:entry -->
